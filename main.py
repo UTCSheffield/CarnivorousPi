@@ -1,3 +1,50 @@
+import sqlite3
+class Database:
+    
+    def __init__(self,File, tableName = 'Logging_Table'):
+        self.database = sqlite3.connect(File)
+        self.file = File
+        self.tableName = tableName
+        try:
+            self.database.execute(
+            #'''IF object_id("Logging_Table") is not null
+                '''
+                                    CREATE TABLE Logging_Table (
+                                        TIME int,
+                                        HUMIDITY int,
+                                        CO2 int,
+                                        TEMP int)
+''')
+        except sqlite3.OperationalError :
+            print ("Logging_TableTable exists")
+            cur = self.database.execute('SELECT COUNT(*) FROM Logging_Table;')
+            data = cur.fetchone()
+            print "Current rows : %s" % data    
+            self.Close()
+        else:
+            self.Close()
+        
+    def Connect(self):
+        self.database = sqlite3.connect(self.file)
+        
+        
+    def LogEvent(self, Humidity = 0.0, CO2 = 0.0, Temp = 0.0):
+        if (self.database == None):
+            self.Connect()
+            
+        if (self.database != None):
+            sql = "INSERT INTO "+self.tableName +" (TIME, HUMIDITY, CO2, TEMP) VALUES("+str(int(time.time()))+", "+str(int(Humidity))+", "+str(int(CO2))+", "+str(int(Temp))+");"
+            print(sql)
+            self.database.execute(sql)
+            self.database.commit()
+            #print("changes:", self.database.total_changes)
+            self.Close()
+            
+    def Close(self):
+        if (self.database != None):
+            self.database.close()
+            self.database = None
+
 
 class DeviceIDs:
     Heater = 1
@@ -11,24 +58,28 @@ sense = SenseHat()
 #from envirophat import weather
 from sispmctl import SisPM
 from sense_hat import SenseHat
+RawData = []
 import datetime
 #sense = SenseHat()
 
 #sense.show_message("Hello world!")
 import time
 device = SisPM(serial="01:01:57:5e:3c", binary="/usr/bin/sispmctl")
-# get status of all outlets  
-#device.get("all") # example result: {1: True, 2: True, 3: True, 4: True}
-# turn on outlet 1
+
+d = Database("Logging.db")
 
 #for i in range(5):
-while True:
+try:
+  while True:
     #print("Enviro Hat Temp",weather.temperature())
     print("Sense Hat Humdity", sense.humidity)
     print("Sense Hat Temp",sense.temperature)
     now = datetime.datetime.now()
     #print(now.hour)
 
+    d.LogEvent(sense.humidity, 0, sense.temperature)
+
+   
     if now.hour < 9 or now.hour > 15:
         device.on(DeviceIDs.Lights)
     else:
@@ -45,7 +96,18 @@ while True:
         device.on(DeviceIDs.Humidifier)
     else:
         device.off(DeviceIDs.Humidifier)
-
-    time.sleep(10)
-
-
+    
+    time.sleep(5)
+    
+except KeyboardInterrupt:
+    print "Shutdown requested...exiting"
+    device.off(DeviceIDs.Lights)
+    device.off(DeviceIDs.Heater)
+    device.off(DeviceIDs.Humidifier)
+    d.Close()
+except Exception:
+    device.off(DeviceIDs.Lights)
+    device.off(DeviceIDs.Heater)
+    device.off(DeviceIDs.Humidifier)
+    d.Close()
+    traceback.print_exc(file=sys.stdout)  
