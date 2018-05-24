@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    
+    <link href="/static/css/style.css" rel="stylesheet">
+    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script type="text/javascript">
+      
+      //this is the function that holds the code to make the graph
+      $(document).ready(function() {
+			function getLatest(since) {
+			   Plotly.d3.json("/todaysdata", function(error, data){
+				   console.log("hi")
+			   //Plotly.d3.json("/latestdata?since="+since, function(error, data){
+			      Plotly.animate("myDiv", {
+    				data: data.measurements,
+						traces: [0]//, /* With a bit of work, you can list any other traces you want to update too (e.g. make a for loop over trace++ and set update[trace] at each iteration) */
+						//layout: {}
+					}, {
+				    // These 2 make sure the plot updates as quickly as possible:
+			        transition: {duration: 500}//,
+					//frame: {duration: 0, redraw: false}
+                    }); 
+                    setTimeout(function(){getLatest(data.time)}, 10000);
+                });
+			};
+                
+
+
+		Plotly.d3.json("/todaysdata", function(error, data){
+			
+			myPlot = document.getElementById('myDiv')
+			console.log("myPlot", myPlot);
+			//this is the bit of code that asemble the look of the graph. little is needed to do as the data that comes from the webserver creates everything
+			var layout = {
+			  title: "Today's data",
+			  xaxis:{  
+				     title : "time" ,
+				     autorange: true}
+			};
+		
+			//this is the bit of code that creates the graph from the other data
+			  Plotly.plot(myPlot, data.measurements, layout, {showLink: false});
+				setTimeout(function(){getLatest(data.time)}, 10000);
+			
+                 });    
+	
+      });
+    </script>
+  </head>
+  <body bgcolor = "#1B54A4">
+
+  <!--this changes the color to a simmiler background coler to the UTC logo-->
+<h1>Carnivorous Pi</h1>
+<!--this set the title of the page so that you know what it is about-->
+  <div id="myDiv"></div>
+
+  </body>
+</html>

@@ -1,4 +1,19 @@
+#import matplotlib.pyplot as plt
+#from drawnow import drawnow
 import sqlite3
+
+'''
+def make_fig():
+    plt.scatter(x, y)  # I think you meant this
+
+plt.ion()  # enable interactivity
+fig = plt.figure()  # make a figure
+'''
+
+x = list()
+y = list()
+
+
 class Database:
     
     def __init__(self,File, tableName = 'Logging_Table'):
@@ -19,7 +34,7 @@ class Database:
             print ("Logging_TableTable exists")
             cur = self.database.execute('SELECT COUNT(*) FROM Logging_Table;')
             data = cur.fetchone()
-            print "Current rows : %s" % data    
+            print ("Current rows : %s" % data)    
             self.Close()
         else:
             self.Close()
@@ -78,7 +93,10 @@ try:
     #print(now.hour)
 
     d.LogEvent(sense.humidity, 0, sense.temperature)
-
+    x.append(now)
+    y.append(sense.temperature)  # or any arbitrary update to your figure's data
+    
+    #drawnow(make_fig)
    
     if now.hour < 9 or now.hour > 15:
         device.on(DeviceIDs.Lights)
@@ -100,7 +118,7 @@ try:
     time.sleep(5)
     
 except KeyboardInterrupt:
-    print "Shutdown requested...exiting"
+    print ("Shutdown requested...exiting")
     device.off(DeviceIDs.Lights)
     device.off(DeviceIDs.Heater)
     device.off(DeviceIDs.Humidifier)
